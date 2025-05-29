@@ -1,8 +1,32 @@
 <script>
+	import { loadStripe } from '@stripe/stripe-js';
+	import { PUBLIC_STRIPE_KEY } from '$env/static/public';
 	let { children, ...props } = $props();
+
+	async function onclick() {
+		try {
+			const stripe = await loadStripe(PUBLIC_STRIPE_KEY);
+			const response = await fetch('/api/checkout', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to create checkout session');
+			}
+
+			const { id } = await response.json();
+			await stripe.redirectToCheckout({ sessionId: id });
+		} catch (error) {
+			console.error('Checkout error:', error);
+			// You might want to show a user-friendly error message here
+		}
+	}
 </script>
 
-<button {...props}>{@render children()}</button>
+<button {...props} {onclick}>{@render children()}</button>
 
 <style>
 	button {
